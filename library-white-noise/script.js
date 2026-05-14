@@ -137,74 +137,63 @@ function scheduleRandom(fn, minMs, maxMs) {
 }
 
 function libraryMode() {
-  startNoise({ volume: 0.012, low: 55, high: 260, playbackRate: 0.42 });
+  startNoise({ volume: 0.006, low: 45, high: 170, playbackRate: 0.35 });
 
   const air = addNode(state.context.createOscillator());
-  const airGain = connectGain(0.006);
+  const airGain = connectGain(0.004);
   air.type = "sine";
-  air.frequency.value = 118;
+  air.frequency.value = 96;
   air.connect(airGain);
   air.start();
 
   const pageTurn = () => {
-    const swipes = 1 + Math.floor(Math.random() * 3);
+    const swipes = Math.random() > 0.74 ? 2 : 1;
     for (let i = 0; i < swipes; i += 1) {
       window.setTimeout(() => {
         noiseBurst({
-          duration: 0.05 + Math.random() * 0.13,
-          volume: 0.022 + Math.random() * 0.035,
-          low: 900 + Math.random() * 700,
-          high: 2800 + Math.random() * 1800,
+          duration: 0.16 + Math.random() * 0.26,
+          volume: 0.012 + Math.random() * 0.018,
+          low: 1250 + Math.random() * 600,
+          high: 2600 + Math.random() * 1300,
           q: 0.8,
-          fadeIn: 0.004,
-          fadeOut: 0.04,
-          playbackRate: 0.85 + Math.random() * 0.45,
+          fadeIn: 0.025,
+          fadeOut: 0.18,
+          playbackRate: 0.72 + Math.random() * 0.28,
         });
-      }, i * (55 + Math.random() * 95));
+      }, i * (220 + Math.random() * 170));
     }
   };
 
-  scheduleRandom(pageTurn, 450, 4200);
+  scheduleRandom(pageTurn, 2200, 7600);
 
   scheduleRandom(() => {
     noiseBurst({
-      duration: 0.09 + Math.random() * 0.08,
-      volume: 0.026,
-      low: 95,
-      high: 520,
-      fadeIn: 0.006,
-      fadeOut: 0.11,
-      playbackRate: 0.55 + Math.random() * 0.2,
+      duration: 0.18 + Math.random() * 0.16,
+      volume: 0.014,
+      low: 70,
+      high: 310,
+      fadeIn: 0.035,
+      fadeOut: 0.22,
+      playbackRate: 0.45 + Math.random() * 0.18,
     });
-    window.setTimeout(() => {
-      noiseBurst({
-        duration: 0.08,
-        volume: 0.018,
-        low: 110,
-        high: 460,
-        fadeIn: 0.005,
-        fadeOut: 0.09,
-        playbackRate: 0.6,
-      });
-    }, 360 + Math.random() * 220);
-  }, 2200, 8400);
+  }, 8500, 19000);
 
   scheduleRandom(() => {
-    chime(84 + Math.random() * 20, 0.08, 0.018, "triangle");
+    chime(70 + Math.random() * 16, 0.16, 0.009, "triangle");
     noiseBurst({
-      duration: 0.12 + Math.random() * 0.16,
-      volume: 0.018,
-      low: 140,
-      high: 950,
-      fadeIn: 0.008,
-      fadeOut: 0.16,
-      playbackRate: 0.65,
+      duration: 0.28 + Math.random() * 0.24,
+      volume: 0.01,
+      low: 115,
+      high: 620,
+      fadeIn: 0.04,
+      fadeOut: 0.26,
+      playbackRate: 0.52,
     });
-  }, 3800, 12500);
+  }, 12000, 26000);
 
   scheduleRandom(() => {
-    chime(155 + Math.random() * 26, 0.06, 0.012, "sine");
-  }, 2600, 9500);
+    chime(142 + Math.random() * 16, 0.11, 0.006, "sine");
+  }, 9000, 24000);
 }
 
 function fantasyMode() {
@@ -231,49 +220,58 @@ function cyberpunkMode() {
 }
 
 function witcherMode() {
-  startNoise({ volume: 0.022, low: 75, high: 1200, playbackRate: 0.48 });
+  const root = 98;
+  const bass = addNode(state.context.createOscillator());
+  const bassGain = connectGain(0.038);
+  bass.type = "triangle";
+  bass.frequency.value = root / 2;
+  bass.connect(bassGain);
+  bass.start();
 
-  const drone = addNode(state.context.createOscillator());
-  const droneGain = connectGain(0.032);
-  drone.type = "sawtooth";
-  drone.frequency.value = 73.42;
-  drone.connect(droneGain);
-  drone.start();
+  const harmony = addNode(state.context.createOscillator());
+  const harmonyGain = connectGain(0.018);
+  harmony.type = "sine";
+  harmony.frequency.value = root * 1.5;
+  harmony.connect(harmonyGain);
+  harmony.start();
 
-  const pulse = addNode(state.context.createOscillator());
-  const pulseGain = connectGain(0.018);
-  pulse.type = "square";
-  pulse.frequency.value = 36.71;
-  pulse.connect(pulseGain);
-  pulse.start();
-
-  const pattern = [146.83, 146.83, 174.61, 164.81, 146.83, 123.47, 130.81, 110];
+  const pattern = [196, 246.94, 293.66, 329.63, 293.66, 246.94, 220, 246.94];
+  const chords = [
+    [98, 146.83, 196],
+    [110, 164.81, 220],
+    [130.81, 196, 261.63],
+    [146.83, 220, 293.66],
+  ];
   let step = 0;
 
   addTimer(window.setInterval(() => {
     const beat = step % 8;
     const note = pattern[beat];
+    const chord = chords[Math.floor(step / 8) % chords.length];
 
-    chime(beat === 0 || beat === 4 ? 73.42 : 98, 0.11, beat === 0 ? 0.105 : 0.065, "sine");
-
-    if (beat === 2 || beat === 6) {
-      chime(220 + Math.random() * 90, 0.045, 0.035, "square");
+    if (beat === 0 || beat === 4) {
+      chime(chord[0] / 2, 0.2, 0.09, "triangle");
     }
 
-    chime(note, 0.16, 0.044, "triangle");
-    if (beat === 3 || beat === 7) {
-      window.setTimeout(() => chime(note * 2, 0.1, 0.03, "sawtooth"), 90);
+    chime(note, 0.22, beat % 2 === 0 ? 0.048 : 0.035, "triangle");
+    if (beat === 1 || beat === 5) {
+      chime(chord[1], 0.34, 0.03, "sine");
+      chime(chord[2], 0.34, 0.024, "sine");
+    }
+
+    if (beat === 7) {
+      window.setTimeout(() => chime(note * 1.5, 0.16, 0.042, "triangle"), 105);
     }
 
     step += 1;
-  }, 285));
+  }, 245));
 
   scheduleRandom(() => {
-    const accents = [293.66, 329.63, 392, 440];
-    const note = accents[Math.floor(Math.random() * accents.length)];
-    chime(note, 0.22, 0.032, "sawtooth");
-    window.setTimeout(() => chime(note * 0.75, 0.18, 0.026, "triangle"), 120);
-  }, 1800, 3400);
+    const run = [392, 440, 493.88, 587.33, 659.25];
+    run.forEach((note, index) => {
+      window.setTimeout(() => chime(note, 0.14, 0.034, "triangle"), index * 95);
+    });
+  }, 5200, 9400);
 }
 
 function clearSound() {
