@@ -7,6 +7,7 @@ const state = {
   mode: "library",
   nodes: [],
   timers: [],
+  media: [],
 };
 
 const modeTitles = {
@@ -14,6 +15,7 @@ const modeTitles = {
   fantasy: "Epic Fantasy",
   cyberpunk: "Cyberpunk",
   witcher: "Monster Hunter",
+  dojo: "Kendo Dojo",
 };
 
 const playButton = document.querySelector("#playButton");
@@ -54,6 +56,25 @@ function connectGain(value) {
   gain.gain.value = value;
   gain.connect(state.master);
   return gain;
+}
+
+function updateMediaVolumes() {
+  const masterVolume = Number(volume.value);
+  state.media.forEach(({ audio, volume: localVolume }) => {
+    audio.volume = Math.min(1, masterVolume * localVolume);
+  });
+}
+
+function playMedia(src, { volume: localVolume = 1, loop = false, playbackRate = 1 } = {}) {
+  const audio = new Audio(src);
+  audio.loop = loop;
+  audio.playbackRate = playbackRate;
+  state.media.push({ audio, volume: localVolume });
+  updateMediaVolumes();
+  audio.play().catch(() => {
+    // Browsers may refuse audio if the play gesture is interrupted.
+  });
+  return audio;
 }
 
 function startNoise({ volume: gainValue, low = 350, high = 3800, playbackRate = 1 }) {
@@ -137,10 +158,8 @@ function scheduleRandom(fn, minMs, maxMs) {
 }
 
 function libraryMode() {
-  startNoise({ volume: 0.006, low: 45, high: 170, playbackRate: 0.35 });
-
   const air = addNode(state.context.createOscillator());
-  const airGain = connectGain(0.004);
+  const airGain = connectGain(0.003);
   air.type = "sine";
   air.frequency.value = 96;
   air.connect(airGain);
@@ -150,45 +169,18 @@ function libraryMode() {
     const swipes = Math.random() > 0.74 ? 2 : 1;
     for (let i = 0; i < swipes; i += 1) {
       window.setTimeout(() => {
-        noiseBurst({
-          duration: 0.16 + Math.random() * 0.26,
-          volume: 0.012 + Math.random() * 0.018,
-          low: 1250 + Math.random() * 600,
-          high: 2600 + Math.random() * 1300,
-          q: 0.8,
-          fadeIn: 0.025,
-          fadeOut: 0.18,
+        playMedia("assets/page-turn.mp3", {
+          volume: 0.12 + Math.random() * 0.08,
           playbackRate: 0.72 + Math.random() * 0.28,
         });
-      }, i * (220 + Math.random() * 170));
+      }, i * (520 + Math.random() * 420));
     }
   };
 
-  scheduleRandom(pageTurn, 2200, 7600);
-
-  scheduleRandom(() => {
-    noiseBurst({
-      duration: 0.18 + Math.random() * 0.16,
-      volume: 0.014,
-      low: 70,
-      high: 310,
-      fadeIn: 0.035,
-      fadeOut: 0.22,
-      playbackRate: 0.45 + Math.random() * 0.18,
-    });
-  }, 8500, 19000);
+  scheduleRandom(pageTurn, 3800, 12000);
 
   scheduleRandom(() => {
     chime(70 + Math.random() * 16, 0.16, 0.009, "triangle");
-    noiseBurst({
-      duration: 0.28 + Math.random() * 0.24,
-      volume: 0.01,
-      low: 115,
-      high: 620,
-      fadeIn: 0.04,
-      fadeOut: 0.26,
-      playbackRate: 0.52,
-    });
   }, 12000, 26000);
 
   scheduleRandom(() => {
@@ -220,58 +212,53 @@ function cyberpunkMode() {
 }
 
 function witcherMode() {
-  const root = 98;
-  const bass = addNode(state.context.createOscillator());
-  const bassGain = connectGain(0.038);
-  bass.type = "triangle";
-  bass.frequency.value = root / 2;
-  bass.connect(bassGain);
-  bass.start();
+  playMedia("assets/boss-fight.wav", { volume: 0.62, loop: true });
+}
 
-  const harmony = addNode(state.context.createOscillator());
-  const harmonyGain = connectGain(0.018);
-  harmony.type = "sine";
-  harmony.frequency.value = root * 1.5;
-  harmony.connect(harmonyGain);
-  harmony.start();
+function dojoMode() {
+  playMedia("assets/dojo-chimes.ogg", { volume: 0.18, loop: true });
 
-  const pattern = [196, 246.94, 293.66, 329.63, 293.66, 246.94, 220, 246.94];
-  const chords = [
-    [98, 146.83, 196],
-    [110, 164.81, 220],
-    [130.81, 196, 261.63],
-    [146.83, 220, 293.66],
-  ];
-  let step = 0;
+  const wind = addNode(state.context.createOscillator());
+  const windGain = connectGain(0.004);
+  wind.type = "sine";
+  wind.frequency.value = 72;
+  wind.connect(windGain);
+  wind.start();
 
-  addTimer(window.setInterval(() => {
-    const beat = step % 8;
-    const note = pattern[beat];
-    const chord = chords[Math.floor(step / 8) % chords.length];
+  const kiai = () => {
+    const calls = [
+      [196, 246.94],
+      [174.61, 220],
+      [146.83, 196],
+    ];
+    const call = calls[Math.floor(Math.random() * calls.length)];
+    chime(call[0], 0.22, 0.03, "triangle");
+    window.setTimeout(() => chime(call[1], 0.18, 0.022, "sine"), 80);
+  };
 
-    if (beat === 0 || beat === 4) {
-      chime(chord[0] / 2, 0.2, 0.09, "triangle");
+  const cutSequence = () => {
+    const count = 2 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i += 1) {
+      window.setTimeout(() => {
+        playMedia(Math.random() > 0.45 ? "assets/dojo-clack.wav" : "assets/dojo-cut.wav", {
+          volume: 0.18 + Math.random() * 0.14,
+          playbackRate: 0.82 + Math.random() * 0.34,
+        });
+      }, i * (420 + Math.random() * 260));
     }
-
-    chime(note, 0.22, beat % 2 === 0 ? 0.048 : 0.035, "triangle");
-    if (beat === 1 || beat === 5) {
-      chime(chord[1], 0.34, 0.03, "sine");
-      chime(chord[2], 0.34, 0.024, "sine");
+    if (Math.random() > 0.62) {
+      window.setTimeout(kiai, 180 + Math.random() * 500);
     }
+  };
 
-    if (beat === 7) {
-      window.setTimeout(() => chime(note * 1.5, 0.16, 0.042, "triangle"), 105);
-    }
-
-    step += 1;
-  }, 245));
+  scheduleRandom(cutSequence, 2200, 7800);
 
   scheduleRandom(() => {
-    const run = [392, 440, 493.88, 587.33, 659.25];
-    run.forEach((note, index) => {
-      window.setTimeout(() => chime(note, 0.14, 0.034, "triangle"), index * 95);
+    playMedia("assets/bell-ding.wav", {
+      volume: 0.035,
+      playbackRate: 0.7 + Math.random() * 0.35,
     });
-  }, 5200, 9400);
+  }, 14000, 32000);
 }
 
 function clearSound() {
@@ -289,6 +276,11 @@ function clearSound() {
     }
   });
   state.nodes = [];
+  state.media.forEach(({ audio }) => {
+    audio.pause();
+    audio.currentTime = 0;
+  });
+  state.media = [];
 }
 
 function startMode() {
@@ -298,6 +290,7 @@ function startMode() {
     fantasy: fantasyMode,
     cyberpunk: cyberpunkMode,
     witcher: witcherMode,
+    dojo: dojoMode,
   };
   modes[state.mode]();
 }
@@ -326,6 +319,7 @@ volume.addEventListener("input", () => {
   if (state.master) {
     state.master.gain.value = Number(volume.value);
   }
+  updateMediaVolumes();
 });
 
 modeButtons.forEach((button) => {
