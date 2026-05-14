@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Library Noise</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero" aria-label="Library white noise generator">
+        <div class="shade"></div>
+        <div class="stage">
+          <header class="masthead">
+            <p class="eyebrow">reading room ambience</p>
+            <h1>Library Noise</h1>
+          </header>
+
+          <section class="console" aria-label="Sound controls">
+            <div class="now-playing">
+              <span class="status-light" aria-hidden="true"></span>
+              <div>
+                <p class="label">Now playing</p>
+                <h2 id="modeTitle">Quiet Library</h2>
+              </div>
+            </div>
+
+            <div class="modes" role="group" aria-label="Choose ambience">
+              <button class="mode active" data-mode="library">
+                <span>Quiet Library</span>
+                <small>pages, footsteps, book stacks</small>
+              </button>
+              <button class="mode" data-mode="fantasy">
+                <span>Epic Fantasy</span>
+                <small>low strings, distant choir</small>
+              </button>
+              <button class="mode" data-mode="cyberpunk">
+                <span>Cyberpunk</span>
+                <small>neon pulse, analog hum</small>
+              </button>
+              <button class="mode" data-mode="witcher">
+                <span>Monster Hunter</span>
+                <small>tavern drone, plucked strings</small>
+              </button>
+            </div>
+
+            <div class="transport">
+              <button id="playButton" class="play" aria-pressed="false">Play</button>
+              <label class="slider">
+                <span>Volume</span>
+                <input id="volume" type="range" min="0" max="1" value="0.55" step="0.01" />
+              </label>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
